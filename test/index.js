@@ -6,8 +6,10 @@ const path = require('path');
 const prettier = require('prettier');
 const { NodeVM } = require('vm2');
 const _ = require('lodash');
-const data = require('./data');
-const originData = require('./origin-data');
+const dslHelper = require('@imgcook/dsl-helper');
+ 
+const data = require('./data.json');
+const originData = require('./origin.json');
 
 const vm = new NodeVM({
   console: 'inherit',
@@ -22,6 +24,7 @@ co(function*() {
   );
   const renderInfo = vm.run(code)(data, {
     prettier: prettier,
+    helper: dslHelper,
     _: _,
     originData: originData
   });
@@ -31,10 +34,12 @@ co(function*() {
     renderData,
     {}
   );
-
-  console.log(
-    prettier.format(ret, {
-      printWidth: 120
-    })
+  fs.writeFileSync(path.join(__dirname, '../test/template.result.js'), ret);
+  fs.writeFileSync(
+    path.join(__dirname, '../test/template.result.json'),
+    JSON.stringify(renderInfo, null, 2)
   );
+  fs.writeFileSync(path.join(__dirname, '../test/template.result.html'), ret);
+
+  console.log('代码生成成功');
 });
